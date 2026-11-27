@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "生成式界面（A2UI）",
+    "description": "在对话中渲染 Google A2UI 1.0 界面、卡片、表格与图表，并把用户操作回传给 Agent。"
+  }
+}

@@ -1,0 +1,13 @@
+# Build and dependency artifacts
+node_modules/
+.npm-cache/
+build/
+
+# Research scratch used while inspecting the installed Harness archive
+research/
+.npm-pack/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.log

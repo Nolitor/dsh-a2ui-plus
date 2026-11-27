@@ -1,0 +1,34 @@
+dsh-a2ui
+========
+
+This plugin implements the Agent-to-User Interface (A2UI) version 1.0 wire
+protocol for DeepSeek Harness.
+
+A2UI specification and catalogs
+-------------------------------
+The protocol implemented here is the A2UI 1.0 specification published by the
+A2UI project (https://a2ui.org/, https://github.com/a2ui-project/a2ui).
+
+    Copyright 2024 Google LLC
+    Licensed under the Apache License, Version 2.0.
+
+No source code from the A2UI project is copied into this package. The wire
+format, message names, component property names, catalog identifiers, and
+function signatures were read from the official v1.0 schemas and catalog
+definitions shipped in `@a2ui/web_core@0.15.0` (Apache-2.0) and re-expressed
+as an independent validator and renderer. The catalog id
+`https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json` and the
+component/function names it defines are therefore attributed here.
+
+DeepSeek Harness
+----------------
+This package is a plugin for DeepSeek Harness (https://github.com/deepseek-ai/deepseek-harness)
+and uses only its public extension points: the tool registry, the
+system-prompt section registry, the Client slot registry, the locale service,
+and the Session Conversation service. No Harness source code is modified or
+vendored.
+
+Third-party code
+----------------
+None. The runtime has no dependencies beyond `react`, which the Harness Client
+provides through its module table.

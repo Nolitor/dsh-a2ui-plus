@@ -1,0 +1,8 @@
+# @nolit/dsh-a2ui-plus — bundle patch.
+#
+# One Host row registers the A2UI tools, the preset-aware guidance section, the
+# RPC action channel and the `/a2ui/ws` downlink. The browser half is picked up
+# from `dsh.client` in package.json; no second row is needed for it.
+- insert:
+    - id: dsh-a2ui-plus
+      name: '@nolit/dsh-a2ui-plus'

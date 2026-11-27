@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Generative UI (A2UI)",
+    "description": "Renders Google A2UI 1.0 surfaces, cards, tables and charts inside the conversation and sends user actions back to the agent."
+  }
+}
