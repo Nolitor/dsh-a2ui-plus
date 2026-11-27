@@ -1,6 +1,6 @@
 {
   "name": "@nolit/dsh-a2ui-plus",
-  "version": "0.0.1-rc.2",
+  "version": "0.0.1-rc.3",
   "description": "Generative UI for DeepSeek Harness: A2UI 1.0 surfaces inline or in the sidebar, with AG-UI state deltas and a bidirectional function channel.",
   "keywords": [
     "dsh",
