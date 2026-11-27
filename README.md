@@ -10,9 +10,10 @@ updated: 2026-11-27
 summary: English product documentation for @nolit/dsh-a2ui-plus — a bidirectional A2UI 1.0 workspace plugin whose inline summary card and right-sidebar tab stay live off one Surface Store, with STATE_DELTA sync, single-dispatch action dedupe and cross-session isolation.
 -->
 
-> **Not a snapshot that ends with its call.** The summary card in the conversation
-> and the tab in the right sidebar subscribe to one `Surface Store`, and every
-> `STATE_DELTA` that arrives repaints both.
+> **Not a snapshot that ends with its call.** A surface keeps living after the tool call
+> returns: the agent can update it, and the user's interaction comes back as a normal message.
+> One `Surface Store` holds it; two views render it **differently** — a condensed card in the
+> conversation, the full interactive graph in the right sidebar.
 
 [![Version](https://img.shields.io/badge/version-0.0.1--rc.2-blue.svg)](./CHANGELOG.md)
 [![Protocol](https://img.shields.io/badge/A2UI-1.0-teal.svg)](https://google.github.io/a2ui/)
@@ -78,12 +79,46 @@ duplicated frame cannot corrupt the screen.
 
 ---
 
-## 2. Dual view — a card and a tab at the same time
+## 2. Two views of one surface — and they are not the same view
 
-With `placement: "inline"` (the default) the conversation card draws the whole graph.
-With `placement: "sidebar"` **both** appear: a fully interactive tab on the right, and in the
-conversation a **summary card** carrying the title, a few key rows, the component count and
-`[Open in sidebar]`.
+The point of this package is not that two panes show the same thing. It is that **one surface
+has two different representations**, and both stay live off the same state.
+
+```text
+                      SurfaceStore (one per session, the only source of truth)
+                                   │
+                       ViewAdapter (the only subscriber)
+                             ├─────────────┴─────────────┐
+                             ▼                           ▼
+                     inlineModel(surfaceId)      fullModel(surfaceId)
+                             │                           │
+                             ▼                           ▼
+                   conversation card              right-sidebar tab
+                   (condensed view model)         (full interactive graph)
+```
+
+| | Conversation card (`inlineModel`) | Sidebar tab (`fullModel`) |
+| :-- | :-- | :-- |
+| Carries | `title`, `rows[]`, `componentCount`, `hiddenRows` | the whole `surface`: component map, order, data model |
+| The graph | **absent** — when condensed, the `full` field is never populated (`view-adapter.ts:220-221`) | rendered in full: tables, charts, forms, all local interaction |
+| Renderer | `InlineSummary` (`tool-view.tsx:265`) — text rows plus `[Open in sidebar]` | the ordinary A2UI renderer |
+| Why | keeps the conversation readable; says what exists without taking it over | interaction needs the space |
+
+Because the card cannot hold the graph, drawing the same dashboard twice is prevented at the
+**type level**, not by a convention someone has to remember.
+
+### Which card you get depends on `placement`
+
+`placement` decides the card's *role*, and the adapter resolves it against the viewport
+(`inlineModelOf` → `effectivePlacement`, `view-adapter.ts:202`):
+
+| `placement` | `condensed` | Conversation card | Sidebar tab |
+| :-- | :-- | :-- | :-- |
+| `"inline"` (default) | `false` | the full graph, rendered in place | none |
+| `"sidebar"` | `true` | the summary: title, key rows, component count, `[Open in sidebar]` | the full graph |
+| `"sidebar"` below 768px | `false` | the full graph — a tab is not opened at this width (`surface-store.ts:86`) | none |
+
+So the two views differ in *what they are*, not merely in *where they sit*.
 
 ### Why there is a ViewAdapter layer
 

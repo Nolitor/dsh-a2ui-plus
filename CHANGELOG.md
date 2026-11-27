@@ -16,6 +16,29 @@ All notable changes to this plugin. Version numbers follow [SemVer](https://semv
 Forked as `@nolit/dsh-a2ui-plus` `0.0.1-rc.1`. Upstream 0.4.0 notes below are retained as the
 inherited baseline; every entry above them is this fork's own history.
 
+### Step 17 — the two views are two models, and the README now says so
+
+"Dual view" was imprecise enough to be wrong. It read as *two panes showing the same thing*, when
+the actual design is **one surface with two different representations**: a condensed card in the
+conversation and the full interactive graph in the sidebar tab. The distinction matters because it
+is the reason the package exists, and the README described the mechanism without the point.
+
+- **Both READMEs rewritten at §2.** New title ("Two views of one surface — and they are not the
+  same view" / "하나의 surface, 두 개의 뷰 — 그리고 그 둘은 같은 뷰가 아닙니다"), a layer diagram
+  showing `ViewAdapter` fanning out to `inlineModel` and `fullModel`, and a table comparing what
+  each model carries.
+- **The `placement` role table is new.** It states the part that was missing entirely:
+  `placement` decides the card's *role*, not merely its location. `inline` → the card holds the
+  graph (`condensed: false`); `sidebar` → the card is the summary and the tab holds the graph
+  (`condensed: true`); `sidebar` below 768px → the card holds the graph again and no tab opens.
+- **The opening claim was corrected.** "every `STATE_DELTA` repaints both" is true but misleading;
+  it now says the two views render the surface *differently*, which is what a reader needs.
+- **Citations verified by printing each line**: `view-adapter.ts:202` (`condensed:`),
+  `:220-221` (the `full` omission), `:311` (`inlineModel`), `tool-view.tsx:265` (`InlineSummary`),
+  `surface-store.ts:86` (`effectivePlacement`).
+
+`docs/DUAL-VIEW.md` already stated this correctly at "The two models" — the README was the outlier,
+so that document is unchanged.
 ### Step 16 — packaging: publish access, engine window, shipped docs
 
 Publication preparation, measured before any push. Two of the three defects below would have

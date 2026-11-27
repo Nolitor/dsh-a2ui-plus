@@ -10,9 +10,10 @@ updated: 2026-11-27
 summary: Korean product documentation for @nolit/dsh-a2ui-plus — a bidirectional A2UI 1.0 workspace plugin whose inline summary card and right-sidebar tab stay live off one Surface Store, with STATE_DELTA sync, single-dispatch action dedupe and cross-session isolation.
 -->
 
-> **한 번의 호출로 끝나는 스냅샷이 아니라, 대화와 사이드바가 같은 화면을 계속 공유합니다.**
-> 대화 안의 요약 카드와 오른쪽 사이드바 탭이 하나의 `Surface Store`를 구독하고,
-> `STATE_DELTA`가 도착할 때마다 양쪽이 함께 갱신됩니다.
+> **한 번의 호출로 끝나는 스냅샷이 아닙니다.** 도구 호출이 끝난 뒤에도 surface는 살아 있고,
+> 에이전트는 그것을 계속 갱신하며, 사용자의 조작은 평범한 메시지로 되돌아옵니다.
+> 하나의 `Surface Store`가 그 상태를 들고, **두 뷰가 서로 다르게** 그립니다 —
+> 대화에는 요약 카드, 오른쪽 사이드바에는 전체 인터랙티브 그래프입니다.
 
 [![Version](https://img.shields.io/badge/version-0.0.1--rc.2-blue.svg)](./CHANGELOG.md)
 [![Protocol](https://img.shields.io/badge/A2UI-1.0-teal.svg)](https://google.github.io/a2ui/)
@@ -73,11 +74,46 @@ summary: Korean product documentation for @nolit/dsh-a2ui-plus — a bidirection
 
 ---
 
-## 2. 이중 뷰 — `placement`에 따라 카드와 탭이 동시에
+## 2. 하나의 surface, 두 개의 뷰 — 그리고 그 둘은 같은 뷰가 아닙니다
 
-`placement: "inline"`(기본)이면 대화 카드가 그래프 전체를 그립니다.
-`placement: "sidebar"`이면 **둘 다** 뜹니다:
-오른쪽에는 완전한 인터랙티브 탭, 대화에는 제목·핵심 행·컴포넌트 수·`[사이드바에서 열기]`를 담은 **요약 카드**입니다.
+이 패키지의 요점은 "두 창이 같은 걸 보여준다"가 아닙니다.
+**하나의 surface가 서로 다른 두 표현을 갖고, 둘 다 같은 상태에서 살아 있다**는 것입니다.
+
+```text
+                  SurfaceStore (세션당 1개, 유일한 진실)
+                               │
+                    ViewAdapter (유일한 구독자)
+                         ├─────────────┴─────────────┐
+                         ▼                           ▼
+                 inlineModel(surfaceId)      fullModel(surfaceId)
+                         │                           │
+                         ▼                           ▼
+                   대화 카드                   오른쪽 사이드바 탭
+                 (축약 뷰모델)                 (전체 인터랙티브 그래프)
+```
+
+| | 대화 카드 (`inlineModel`) | 사이드바 탭 (`fullModel`) |
+| :-- | :-- | :-- |
+| 담는 것 | `title`, `rows[]`, `componentCount`, `hiddenRows` | `surface` 전체: 컴포넌트 맵, 선언 순서, 데이터모델 |
+| 그래프 | **없음** — condensed이면 `full` 필드를 아예 채우지 않습니다 (`view-adapter.ts:220-221`) | 표·차트·폼과 모든 로컬 조작을 그대로 렌더 |
+| 렌더러 | `InlineSummary` (`tool-view.tsx:265`) — 텍스트 행 + `[사이드바에서 열기]` | 일반 A2UI 렌더러 |
+| 이유 | 대화 흐름을 끊지 않고 "무엇이 있는지"만 알린다 | 조작에는 화면 넓이가 필요하다 |
+
+카드가 그래프를 담을 수 없기 때문에, 같은 대시보드를 두 번 그리는 사고는
+누군가 기억해야 하는 관례가 아니라 **타입 수준**에서 막힙니다.
+
+### 어떤 카드가 나오는지는 `placement`가 정합니다
+
+`placement`는 카드의 *역할*을 정하고, 어댑터가 뷰포트 폭을 반영해 해석합니다
+(`inlineModelOf` → `effectivePlacement`, `view-adapter.ts:202`):
+
+| `placement` | `condensed` | 대화 카드 | 사이드바 탭 |
+| :-- | :-- | :-- | :-- |
+| `"inline"` (기본) | `false` | 그래프 전체를 제자리에 렌더 | 없음 |
+| `"sidebar"` | `true` | 요약: 제목·핵심 행·컴포넌트 수·`[사이드바에서 열기]` | 그래프 전체 |
+| `"sidebar"` 768px 미만 | `false` | 그래프 전체 — 이 폭에서는 탭을 열지 않음 (`surface-store.ts:86`) | 없음 |
+
+즉 두 뷰의 차이는 **어디에 놓이느냐가 아니라 무엇이냐**입니다.
 
 ### 왜 ViewAdapter를 따로 두는가
 
